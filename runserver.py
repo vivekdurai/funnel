@@ -1,6 +1,7 @@
 import sys
-from funnel import app, models, init_for
+from funnel import app, models, init_for, load_root
 init_for('dev')
+load_root()
 
 try:
     port = int(sys.argv[1])
