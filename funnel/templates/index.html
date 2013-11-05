@@ -19,11 +19,10 @@
       {% endblock %}
       <p>
         {{ config['WELCOME_MESSAGE'] }}
-        {% if siteadmin %}<a href="{{url_for('space_new')}}" style="float:right">{% trans %}New space{% endtrans %}</a>{% endif %}
+        {%- if siteadmin %} <a href="/new" style="float:right">{% trans %}New space{% endtrans %}</a>{% endif %}
       </p>
     </div>
   </div>
-  <br />
   {% if spaces %}
     <ul class="cardset row">
       {% for space in spaces %}
@@ -42,7 +41,7 @@
     </ul>
   {% else %}
     <p>{% trans %}There are no proposal spaces at this time.{% endtrans %}
-        <a href="{{url_for('space_new')}}">{% trans %}Create one{% endtrans %}</a>.
+        <a href="/new">{% trans %}Create one{% endtrans %}</a>.
     </p>
   {% endif %}
 

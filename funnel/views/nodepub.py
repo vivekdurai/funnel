@@ -3,8 +3,7 @@
 from __future__ import absolute_import
 
 from nodular import NodePublisher
-from .. import app
-from ..models import registry
+from .. import app, registry
 
 homepublisher = NodePublisher(None, registry, '/home', '/')
 profilepublisher = NodePublisher(None, registry, '/profiles', '/')

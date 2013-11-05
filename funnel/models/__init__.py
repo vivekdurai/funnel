@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from coaster.sqlalchemy import BaseMixin, BaseNameMixin, BaseScopedNameMixin, BaseIdNameMixin, MarkdownColumn
-from nodular import db, NodeRegistry
-
-registry = NodeRegistry()
+from nodular import db
 
 from .user import *
 from .commentvote import *
