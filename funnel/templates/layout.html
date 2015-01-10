@@ -1,5 +1,43 @@
-{% extends "baseframe.html" -%}
-{% from "baseframe/components.html" import hgnav with context %}
+{% extends "baseframe-2panel.html" -%}
+{% from "baseframe/components.html" import hgpanel with context %}
+
+{% block logo -%}
+  <div class="logo"><img src="{{ url_for('static', filename='img/logo@2x.png') }}" alt=""></div>
+{%- endblock %}
+
+{% block sidebar -%}
+<div class="container-fluid sidebar">
+  <div class="row-fluid">
+    <div class="col-xs-12">
+      <form>
+        <fieldset>
+          <div class="form-group">
+            <select class="form-control">
+              <option>Keyword</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <select class="form-control">
+              <option>Type</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <select class="form-control">
+              <option>Category</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <select class="form-control">
+              <option>Location</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Search</button>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+</div>
+{%- endblock %}
 
 {% block headerbox %}
   {% macro site_title() %}
@@ -18,7 +56,7 @@
       </h1>
     </div>
   {% endmacro %}
-  {{ hgnav(site_title=site_title()) }}
+  {{ hgpanel(site_title=site_title()) }}
 
 {% endblock %}
 
