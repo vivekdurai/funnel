@@ -1,7 +1,8 @@
 {% extends "layout.html" %}
+{% from "macros.html" import rsvpform, rsvpscript %}
 {% block title %}{{ space.title }}{% endblock %}
 
-{%- macro proposal_table(proposals) %}
+{%- macro proposal_table(space, proposals) %}
   <div class="table-responsive">
     <table class="table table-bordered listing">
       <thead>
@@ -9,10 +10,9 @@
           <th class="num">#</th>
           <th>{% trans %}Speaker{% endtrans %}</th>
           <th>{% trans %}Section{% endtrans %}</th>
-          <th>{% trans %}Type{% endtrans %}</th>
           <th>{% trans %}Level{% endtrans %}</th>
           <th class="num">{% trans %}+1{% endtrans %}</th>
-          <th class="num"><i class="icon-comment"></i></th>
+          <th class="num"><i class="fa fa-comment-o"></i></th>
           <th>{% trans %}Submitted{% endtrans %}</th>
         </tr>
       </thead>
@@ -21,7 +21,7 @@
           {%- set link=proposal.url_for() -%}
           <tr>
             <td class="num"><a href="{{ link }}">{{ loop.index }}</a></td>
-            <td colspan="8">
+            <td colspan="6">
               <a href="{{ link }}"><strong>{{ proposal.title }}</strong></a>
               {% if proposal.preview_video %}
                 <span data-toggle="tooltip" data-placement="top" title="This proposal has a preview video" class="tooltip icon-film" style="opacity: 1"></span>
@@ -46,8 +46,7 @@
                 {{ proposal.user.pickername }} <em>{% trans %}(proposing){% endtrans %}</em>
               {%- endif -%}
             </a></td>
-            <td><a href="{{ link }}">{{ proposal.section.title }}</a></td>
-            <td><a href="{{ link }}">{{ proposal.session_type }}</a></td>
+            <td><a href="{{ link }}">{%- if proposal.proposal_space != space %}{{ proposal.proposal_space.short_title() }}{% else %}{{ proposal.section.title }}{% endif %}</a></td>
             <td><a href="{{ link }}">{{ proposal.technical_level }}</a></td>
             <td class="num"><a href="{{ link }}">
               {{ proposal.votes.count }}
@@ -125,15 +124,37 @@
     {%- endif -%}
   </strong>
 </p>
-{% if space.status == 1 -%}
-  <p>
-    <a class="btn btn-success" href="{{ space.url_for('new-proposal') }}">{% trans %}Propose a session{% endtrans %}</a>
-    {% if 'title_helper' in space.content and space.content['title_helper'] %}
-      <span data-toggle="tooltip" data-placement="right" title="{{ space.content['title_helper'] }}" class="tooltip icon-question-sign" style="opacity: 1"></span>
-    {% endif %}
-  </p>
-{% endif %}
-  {{ description }}
+{%- if space.allow_rsvp %}
+  <h3>{% trans %}Attending this event?{% endtrans %}</h3>
+  {%- if g.user %}
+    {{ rsvpform(space, rsvp_form) }}
+  {%- else %}
+    <p>
+      <a href="{{ url_for('login') }}" class='btn btn-primary btn-sm'>{% trans %}Login to RSVP{% endtrans %}</a>
+    </p>
+  {%- endif %}
+  {% if g.user and 'view-rsvps' in g.permissions %}
+    <a href="{{ space.url_for('rsvp-list') }}">See RSVP list</a>
+  {% endif %}
+{%- endif %}
+{{ description }}
+{%- if space.subspaces %}
+  <ul class="cardset row">
+    {% for subspace in space.subspaces %}
+      <li class="col-md-4 col-sm-6">
+        <a href="{{ subspace.url_for() }}">
+          <div class="card-title">
+            <h2>{{ subspace.title }}</h2>
+            <h3>{{ subspace.datelocation }}</h3>
+          </div>
+          <div class="card-body">
+            <p>{{ subspace.tagline }}</p>
+          </div>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{%- endif %}
 {% if space.status == 1 -%}
   <p>
     <a class="btn btn-success" href="{{ space.url_for('new-proposal') }}">{% trans %}Propose a session{% endtrans %}</a>
@@ -147,16 +168,16 @@
       {%- if 'view-status' in g.permissions %}
         {%- for status, proposal_group in space.proposals_by_status.iteritems() if proposal_group -%}
             <h3>{{ PROPOSALSTATUS[status] }} {% trans %}proposals{% endtrans %}</h3>
-            {{ proposal_table(proposal_group) }}
+            {{ proposal_table(space, proposal_group) }}
         {%- endfor -%}
       {%- else %}
         {%- if space.proposals_by_confirmation['confirmed'] %}
           <h3>{% trans %}Confirmed sessions{% endtrans %}</h3>
-          {{ proposal_table(space.proposals_by_confirmation['confirmed']) }}
+          {{ proposal_table(space, space.proposals_by_confirmation['confirmed']) }}
         {%- endif %}
         {%- if space.proposals_by_confirmation['unconfirmed'] %}
           {%- if space.proposals_by_confirmation['confirmed'] %}<h3>{% trans %}Unconfirmed proposals{% endtrans %}</h3>{% endif %}
-          {{ proposal_table(space.proposals_by_confirmation['unconfirmed']) }}
+          {{ proposal_table(space, space.proposals_by_confirmation['unconfirmed']) }}
         {%- endif %}
       {%- endif %}
 {#
@@ -165,9 +186,5 @@
 #}
 {% endblock %}
 {% block footerscripts %}
-<script type="text/javascript">
-  $(document).ready(function() {
-    $('.tooltip').tooltip();
-  });
-</script>
+  {{ rsvpscript() }}
 {% endblock %}

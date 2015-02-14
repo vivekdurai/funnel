@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from coaster.sqlalchemy import (BaseMixin, BaseNameMixin, BaseScopedNameMixin,
-    BaseScopedIdNameMixin, BaseIdNameMixin, MarkdownColumn)
+from coaster.sqlalchemy import (TimestampMixin, BaseMixin, BaseNameMixin, BaseScopedNameMixin,
+    BaseScopedIdNameMixin, BaseIdNameMixin, MarkdownColumn, JsonDict, CoordinatesMixin)
 from coaster.db import db
 
 from .user import *
@@ -14,3 +14,4 @@ from .proposal import *
 from .feedback import *
 from .session import *
 from .venue import *
+from .rsvp import *

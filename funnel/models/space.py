@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from flask import url_for
-from . import db, BaseScopedNameMixin, MarkdownColumn
+from . import db, TimestampMixin, BaseScopedNameMixin, MarkdownColumn
 from .user import User, Team
 from .profile import Profile
 from .commentvote import VoteSpace, CommentSpace, SPACETYPE
 
-__all__ = ['SPACESTATUS', 'ProposalSpace']
+__all__ = ['SPACESTATUS', 'ProposalSpace', 'ProposalSpaceRedirect']
 
 
 # --- Constants ---------------------------------------------------------------
@@ -45,6 +45,7 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
     bg_image = db.Column(db.Unicode(250), nullable=True)
     bg_color = db.Column(db.Unicode(6), nullable=True)
     explore_url = db.Column(db.Unicode(250), nullable=True)
+    allow_rsvp = db.Column(db.Boolean, default=False, nullable=False)
 
     votes_id = db.Column(db.Integer, db.ForeignKey('votespace.id'), nullable=False)
     votes = db.relationship(VoteSpace, uselist=False)
@@ -57,6 +58,9 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
 
     review_team_id = db.Column(None, db.ForeignKey('team.id'), nullable=True)
     review_team = db.relationship(Team, foreign_keys=[review_team_id])
+
+    parent_space_id = db.Column(None, db.ForeignKey('proposal_space.id', ondelete='SET NULL'), nullable=True)
+    parent_space = db.relationship('ProposalSpace', remote_side='ProposalSpace.id', backref='subspaces')
 
     #: Redirect URLs from Funnel to Talkfunnel
     legacy_name = db.Column(db.Unicode(250), nullable=True, unique=True)
@@ -71,21 +75,52 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
     def __repr__(self):
         return '<ProposalSpace %s/%s "%s">' % (self.profile.name if self.profile else "(none)", self.name, self.title)
 
+    @db.validates('name')
+    def _validate_name(self, key, value):
+        value = unicode(value).strip() if value is not None else None
+        if not value:
+            raise ValueError(value)
+
+        if value != self.name and self.name is not None and self.profile is not None:
+            redirect = ProposalSpaceRedirect.query.get((self.profile_id, self.name))
+            if redirect is None:
+                redirect = ProposalSpaceRedirect(profile=self.profile, name=self.name, proposal_space=self)
+                db.session.add(redirect)
+            else:
+                redirect.proposal_space = self
+        return value
+
     @property
     def rooms(self):
         return [room for venue in self.venues for room in venue.rooms]
 
     @property
+    def proposals_all(self):
+        from .proposal import Proposal
+        if self.subspaces:
+            return Proposal.query.filter(Proposal.proposal_space_id.in_([self.id] + [s.id for s in self.subspaces]))
+        else:
+            return self.proposals
+
+    @property
     def proposals_by_status(self):
         from .proposal import Proposal, PROPOSALSTATUS
-        return dict((status, Proposal.query.filter_by(proposal_space=self, status=status).order_by(db.desc('created_at')).all()) for (status, title) in PROPOSALSTATUS.items() if status != PROPOSALSTATUS.DRAFT)
+        if self.subspaces:
+            basequery = Proposal.query.filter(Proposal.proposal_space_id.in_([self.id] + [s.id for s in self.subspaces]))
+        else:
+            basequery = Proposal.query.filter_by(proposal_space=self)
+        return dict((status, basequery.filter_by(status=status).order_by(db.desc('created_at')).all()) for (status, title) in PROPOSALSTATUS.items() if status != PROPOSALSTATUS.DRAFT)
 
     @property
     def proposals_by_confirmation(self):
         from .proposal import Proposal, PROPOSALSTATUS
+        if self.subspaces:
+            basequery = Proposal.query.filter(Proposal.proposal_space_id.in_([self.id] + [s.id for s in self.subspaces]))
+        else:
+            basequery = Proposal.query.filter_by(proposal_space=self)
         response = dict(
-            confirmed=Proposal.query.filter_by(proposal_space=self, status=PROPOSALSTATUS.CONFIRMED).order_by(db.desc('created_at')).all(),
-            unconfirmed=Proposal.query.filter(Proposal.proposal_space == self, Proposal.status != PROPOSALSTATUS.CONFIRMED, Proposal.status != PROPOSALSTATUS.DRAFT).order_by(db.desc('created_at')).all())
+            confirmed=basequery.filter_by(status=PROPOSALSTATUS.CONFIRMED).order_by(db.desc('created_at')).all(),
+            unconfirmed=basequery.filter(Proposal.status != PROPOSALSTATUS.CONFIRMED, Proposal.status != PROPOSALSTATUS.DRAFT).order_by(db.desc('created_at')).all())
         return response
 
     def user_in_group(self, user, group):
@@ -122,6 +157,8 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
                     'edit-venue',
                     'delete-venue',
                     'edit-schedule',
+                    'move-proposal',
+                    'view-rsvps',
                     ])
             if self.review_team and user in self.review_team.users:
                 perms.update([
@@ -174,6 +211,10 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
             return url_for('schedule_subscribe', profile=self.profile.name, space=self.name, _external=_external)
         elif action == 'ical-schedule':
             return url_for('schedule_ical', profile=self.profile.name, space=self.name, _external=_external).replace('https:', 'webcals:').replace('http:', 'webcal:')
+        elif action == 'rsvp':
+            return url_for('rsvp', profile=self.profile.name, space=self.name)
+        elif action == 'rsvp-list':
+            return url_for('rsvp_list', profile=self.profile.name, space=self.name)
 
     @classmethod
     def all(cls):
@@ -181,3 +222,36 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
         Return currently active events, sorted by date.
         """
         return cls.query.filter(cls.status >= 1).filter(cls.status <= 4).order_by(cls.date.desc()).all()
+
+
+class ProposalSpaceRedirect(TimestampMixin, db.Model):
+    __tablename__ = "proposal_space_redirect"
+
+    profile_id = db.Column(None, db.ForeignKey('profile.id'), nullable=False, primary_key=True)
+    profile = db.relationship(Profile, backref=db.backref('space_redirects', cascade='all, delete-orphan'))
+    parent = db.synonym('profile')
+    name = db.Column(db.Unicode(250), nullable=False, primary_key=True)
+
+    proposal_space_id = db.Column(None, db.ForeignKey('proposal_space.id', ondelete='SET NULL'), nullable=True)
+    proposal_space = db.relationship(ProposalSpace, backref='redirects')
+
+    def __repr__(self):
+        return '<ProposalSpaceRedirect %s/%s: %s>' % (self.profile.name, self.name,
+            self.proposal_space.name if self.proposal_space else "(none)")
+
+    def redirect_view_args(self):
+        if self.proposal_space:
+            return {
+                'profile': self.profile.name,
+                'space': self.proposal_space.name
+                }
+        else:
+            return {}
+
+    @classmethod
+    def migrate_profile(cls, oldprofile, newprofile):
+        """
+        There's no point trying to migrate redirects when merging profiles, so discard them.
+        """
+        oldprofile.space_redirects = []
+        return [cls.__table__.name]

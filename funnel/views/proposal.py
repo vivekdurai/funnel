@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import requests
-
 from datetime import datetime
 from bleach import linkify
 
@@ -14,8 +12,8 @@ from baseframe import _
 from baseframe.forms import render_form, render_delete_sqla
 
 from .. import app, mail, lastuser
-from ..models import (db, Profile, ProposalSpace, ProposalSpaceSection, Proposal, Comment, Vote,
-    ProposalFeedback, FEEDBACK_AUTH_TYPE, PROPOSALSTATUS)
+from ..models import (db, Profile, ProposalSpace, ProposalSpaceRedirect, ProposalSpaceSection, Proposal,
+    ProposalRedirect, Comment, ProposalFeedback, FEEDBACK_AUTH_TYPE, PROPOSALSTATUS)
 from ..forms import ProposalForm, CommentForm, DeleteCommentForm, ProposalStatusForm
 
 proposal_headers = [
@@ -97,7 +95,7 @@ def proposal_data_flat(proposal, groups=[]):
 @lastuser.requires_login
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
     permission='new-proposal')
 def proposal_new(profile, space):
     form = ProposalForm(model=Proposal, parent=space)
@@ -111,13 +109,9 @@ def proposal_new(profile, space):
         form.phone.data = g.user.phone
     if form.validate_on_submit():
         proposal = Proposal(user=g.user, proposal_space=space)
-        if form.speaking.data:
-            proposal.speaker = g.user
-        else:
-            proposal.speaker = None
         with db.session.no_autoflush:
             proposal.votes.vote(g.user)  # Vote up your own proposal by default
-        form.populate_obj(proposal)
+        form.populate_obj(proposal.formdata)
         proposal.name = make_name(proposal.title)
         db.session.add(proposal)
         db.session.commit()
@@ -133,11 +127,11 @@ def proposal_new(profile, space):
 @lastuser.requires_login
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-    (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
     permission='edit-proposal')
 def proposal_edit(profile, space, proposal):
-    form = ProposalForm(obj=proposal, model=Proposal, parent=space)
+    form = ProposalForm(obj=proposal.formdata, model=Proposal, parent=space)
     if not proposal.session_type:
         del form.session_type  # Remove this if we're editing a proposal that had no session type
     form.section.query = ProposalSpaceSection.query.filter_by(proposal_space=space, public=True).order_by('title')
@@ -146,18 +140,9 @@ def proposal_edit(profile, space, proposal):
         del form.section
     if proposal.user != g.user:
         del form.speaking
-    elif request.method == 'GET':
-        form.speaking.data = proposal.speaker == g.user
     if form.validate_on_submit():
-        form.populate_obj(proposal)
+        form.populate_obj(proposal.formdata)
         proposal.name = make_name(proposal.title)
-        if proposal.user == g.user:
-            # Only allow the speaker to change this status
-            if form.speaking.data:
-                proposal.speaker = g.user
-            else:
-                if proposal.speaker == g.user:
-                    proposal.speaker = None
         proposal.edited_at = datetime.utcnow()
         db.session.commit()
         flash(_("Your changes have been saved"), 'info')
@@ -171,8 +156,8 @@ def proposal_edit(profile, space, proposal):
 # @lastuser.requires_login
 # @load_models(
 #     (Profile, {'name': 'profile'}, 'g.profile'),
-#     (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-#     (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+#     ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+#     ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
 #     kwargs=True)
 # def proposal_transition(profile, space, proposal, kwargs):
 #     transition = kwargs['transition']
@@ -183,8 +168,8 @@ def proposal_edit(profile, space, proposal):
 @lastuser.requires_login
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-    (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
     permission='confirm-proposal')
 def proposal_status(profile, space, proposal):
     form = ProposalStatusForm()
@@ -199,8 +184,8 @@ def proposal_status(profile, space, proposal):
 @lastuser.requires_login
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-    (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
     permission='delete-proposal')
 def proposal_delete(profile, space, proposal):
     return render_delete_sqla(proposal, db, title=_(u"Confirm delete"),
@@ -215,8 +200,8 @@ def proposal_delete(profile, space, proposal):
 @app.route('/<space>/<proposal>', methods=['GET', 'POST'], subdomain='<profile>')
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-    (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
     permission='view', addlperms=lastuser.permissions)
 def proposal_view(profile, space, proposal):
     if proposal.proposal_space != space:
@@ -310,8 +295,8 @@ def proposal_view(profile, space, proposal):
 @app.route('/<space>/<proposal>/feedback', methods=['POST'], subdomain='<profile>')
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-    (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
     permission='view', addlperms=lastuser.permissions)
 @requestargs('id_type', 'userid', ('content', int), ('presentation', int), ('min_scale', int), ('max_scale', int))
 def session_feedback(profile, space, proposal, id_type, userid, content, presentation, min_scale=0, max_scale=2):
@@ -349,8 +334,8 @@ def session_feedback(profile, space, proposal, id_type, userid, content, present
 @app.route('/<space>/<proposal>/json', methods=['GET', 'POST'], subdomain='<profile>')
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-    (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
     permission='view', addlperms=lastuser.permissions)
 def proposal_json(profile, space, proposal):
     return jsonp(proposal_data(proposal))
@@ -359,8 +344,8 @@ def proposal_json(profile, space, proposal):
 @app.route('/<space>/<proposal>/next', subdomain='<profile>')
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-    (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
     permission='view', addlperms=lastuser.permissions)
 def proposal_next(profile, space, proposal):
     next = proposal.getnext()
@@ -374,8 +359,8 @@ def proposal_next(profile, space, proposal):
 @app.route('/<space>/<proposal>/prev', subdomain='<profile>')
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
-    (ProposalSpace, {'name': 'space', 'profile': 'profile'}, 'space'),
-    (Proposal, {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
     permission='view', addlperms=lastuser.permissions)
 def proposal_prev(profile, space, proposal):
     prev = proposal.getprev()
@@ -384,3 +369,23 @@ def proposal_prev(profile, space, proposal):
     else:
         flash(_("You were at the first proposal"), 'info')
         return redirect(space.url_for())
+
+
+@app.route('/<space>/<proposal>/move', subdomain='<profile>')
+@load_models(
+    (Profile, {'name': 'profile'}, 'g.profile'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    ((Proposal, ProposalRedirect), {'url_name': 'proposal', 'proposal_space': 'space'}, 'proposal'),
+    permission='move-proposal', addlperms=lastuser.permissions)
+def proposal_moveto(profile, space, proposal):
+    target_name = request.args.get('target')
+    if not target_name:
+        abort(404)
+    profile_name, space_name = target_name.split('/', 1)
+    target_space = ProposalSpace.query.filter(ProposalSpace.name == space_name).join(Profile).filter(Profile.name == profile_name).one_or_none()
+    if target_space:
+        proposal.move_to(target_space)
+        db.session.commit()  # WARNING: GET request!
+        return redirect(proposal.url_for(), 303)
+    else:
+        abort(404)
