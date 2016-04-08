@@ -1,11 +1,22 @@
 <!DOCTYPE html>
 <head>
   <script src='https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js'></script>
-  <link href='https://fonts.googleapis.com/css?family=Droid+Sans:400,700' rel='stylesheet' type='text/css'>
   <style>
     @page {
       size: 4in 11.2in;  /* width height */
       margin: 0;
+    }
+    @font-face {    
+      font-family: 'ClearSans';    
+      font-style: normal;
+      font-weight: 500; 
+      src: url('https://static.hasgeek.co.in/static/fonts/clearsans-regular.ttf') format("truetype");    
+     }   
+    @font-face {    
+      font-family: 'ClearSans';    
+      font-style: normal;
+      font-weight: 700; 
+      src: url('https://static.hasgeek.co.in/static/fonts/clearsans-bold.ttf') format("truetype")    
     }
     body {
       margin: 0;
@@ -16,10 +27,11 @@
       width: 4in;
       height: 11.2in;
       page-break-after: always;
-      background-image: url('https://images.hasgeek.com/embed/file/44aa7d32510246689e60ac1514d48fb4');
+      background-image: url('https://images.hasgeek.com/embed/file/a699c7cf98eb44e2bd99fa1b3a9886ed');
+      /*background-image: url('https://images.hasgeek.com/embed/file/da1de7d8c2a04bd585684be2ef7ada0e');*/
       background-repeat: no-repeat;
       background-size: 100% 100%;
-      font-family: 'Droid Sans', sans-serif;
+      font-family: 'ClearSans';
     }
     .badge{
       width: 4in;
@@ -35,7 +47,7 @@
       transform: rotate(180deg);
     }
     .badge-content { 
-      width: 3in;
+      width: 3.1in;
       margin: 0 auto;
       padding-top: 2in;
     }
@@ -45,9 +57,9 @@
       line-height: 1;
     }
     .first-name {
-      font-size: 55px;
-      max-height: 55px; /* fit text in one line */
-      min-height: 55px;
+      font-size: 65px;
+      max-height: 65px; /* fit text in one line */
+      min-height: 65px;
       text-transform: uppercase;
       font-weight: 700;
     }
@@ -56,31 +68,31 @@
       max-height: 38px; /* fit text in one line */
       min-height: 38px;
       text-transform: uppercase;
-      font-weight: 400;
-      margin-bottom: 3px;
+      font-weight: 500;
+      margin-bottom: 5px;
     }
     .last-name-box {
-      border-bottom: 3px solid #000;
-      margin-bottom: 11px;
+      border-bottom: 1px solid #000;
+      margin-bottom: 5px;
     }
     .company-name{
       font-size: 28px;
       max-height: 50px; /* fit text within two lines */
+      min-height: 28px;
       color: #df5e0e;
       margin-bottom: 5px;
-      font-weight: 700;
-      min-height: 28px;
+      font-weight: 500;
     }
     .twitter-handle {  
       font-size: 28px;
       max-height: 28px; /* fit text in one line */
       color: #0ea5b0;
-      font-weight: 700;
+      font-weight: 500;
     }
     .qrcode {
       text-align: center;
       position: absolute;
-      bottom: 0.7in;
+      bottom: 0.8in;
       left: 0;
       right: 0;
       margin: auto;
