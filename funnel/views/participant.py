@@ -6,7 +6,7 @@ from baseframe import forms
 from baseframe.forms import render_form
 from coaster.views import load_models
 from .. import app, lastuser
-from ..models import (db, Profile, ProposalSpace, Attendee, ProposalSpaceRedirect, Participant, Event, ContactExchange)
+from ..models import (db, Profile, ProposalSpace, Attendee, ProposalSpaceRedirect, Participant, Event, ContactExchange, User)
 from ..forms import ParticipantForm
 from funnel.util import split_name, format_twitter_handle, make_qrcode
 
@@ -120,6 +120,20 @@ def participant(profile, space):
         return jsonify(participant=participant_data(participant, space.id, full=True))
     else:
         return jsonify(message=u"Unauthorized", code=401)
+
+
+@app.route('/<space>/participant/contacts', subdomain='<profile>')
+@lastuser.requires_login
+@load_models(
+    (Profile, {'name': 'profile'}, 'g.profile'),
+    ((ProposalSpace, ProposalSpaceRedirect), {'name': 'space', 'profile': 'profile'}, 'space'),
+    permission='view')
+def participant_contacts(profile, space):
+    if not g.user:
+        jsonify(message=u"Not logged in", code=401)
+    participant_contacts = Participant.query.join(ContactExchange).filter(ContactExchange.user == g.user).all()
+    participant_contact_dicts = [participant_data(participant_contact, space.id, full=True) for participant_contact in participant_contacts]
+    return jsonify(contacts=participant_contact_dicts)
 
 
 @app.route('/<space>/participant/<participant_id>/badge', subdomain='<profile>')
