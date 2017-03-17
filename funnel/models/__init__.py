@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from coaster.sqlalchemy import (TimestampMixin, BaseMixin, BaseNameMixin, BaseScopedNameMixin,
+from coaster.sqlalchemy import (TimestampMixin, IdMixin, BaseMixin, BaseNameMixin, BaseScopedNameMixin,
     BaseScopedIdNameMixin, BaseIdNameMixin, MarkdownColumn, JsonDict, CoordinatesMixin)
 from coaster.db import db
 

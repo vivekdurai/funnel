@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from flask import url_for
-from . import db, BaseMixin, MarkdownColumn
+from baseframe import __
+from coaster.utils import LabeledEnum
+from . import db, BaseMixin, TimestampMixin, MarkdownColumn, IdMixin
 from .user import User
 
-__all__ = ['VoteSpace', 'Vote', 'CommentSpace', 'Comment']
+__all__ = ['VoteSpace', 'Vote', 'CommentSpace', 'Comment', 'CommentSpaceSubscription']
 
 
 # --- Constants ---------------------------------------------------------------
@@ -75,10 +77,33 @@ class CommentSpace(BaseMixin, db.Model):
     __tablename__ = 'commentspace'
     type = db.Column(db.Integer, nullable=True)
     count = db.Column(db.Integer, default=0, nullable=False)
+    subscribers = db.relationship('User', secondary='commentspace_subscription')
 
     def __init__(self, **kwargs):
         super(CommentSpace, self).__init__(**kwargs)
         self.count = 0
+
+    def all_subscribers():
+        return User.query.join(CommentSpaceSubscription).filter(User.email != None,
+            CommentSpaceSubscription.status == COMMENTSPACE_SUBSCRIPTION_TYPE.ALL) # noqa
+
+
+class COMMENTSPACE_SUBSCRIPTION_TYPE(LabeledEnum):
+    ALL = (1, __("All"))
+    MUTE = (2, __("Mute"))
+
+
+class CommentSpaceSubscription(IdMixin, TimestampMixin, db.Model):
+    __tablename__ = 'commentspace_subscription'
+    __table_args__ = (db.UniqueConstraint('user_id', 'commentspace_id'),)
+
+    status = db.Column(db.Integer, default=COMMENTSPACE_SUBSCRIPTION_TYPE.ALL, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship(User, primaryjoin=user_id == User.id,
+        backref=db.backref('subscriptions', lazy='dynamic', cascade="all, delete-orphan"))
+    commentspace_id = db.Column(db.Integer, db.ForeignKey('commentspace.id'), nullable=False)
+    commentspace = db.relationship(CommentSpace, primaryjoin=commentspace_id == CommentSpace.id,
+        backref=db.backref('subscriptions', cascade="all, delete-orphan"))
 
 
 class Comment(BaseMixin, db.Model):

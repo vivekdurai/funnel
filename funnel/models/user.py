@@ -11,6 +11,11 @@ __all__ = ['User', 'Team']
 class User(UserBase2, db.Model):
     __tablename__ = 'user'
 
+    @classmethod
+    def get_by_mentions(cls, content):
+        mentions = [word for word in content.split(" ") if word.startswith('@')]
+        return cls.query.filter(cls.username.in_(mentions))
+
 
 class Team(TeamBase, db.Model):
     __tablename__ = 'team'

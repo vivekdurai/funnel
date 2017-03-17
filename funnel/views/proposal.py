@@ -14,7 +14,8 @@ from baseframe.forms import render_form, render_delete_sqla, Form
 
 from .. import app, mail, lastuser
 from ..models import (db, Profile, ProposalSpace, ProposalSpaceRedirect, ProposalSpaceSection, Proposal,
-    ProposalRedirect, Comment, ProposalFeedback, FEEDBACK_AUTH_TYPE, PROPOSALSTATUS)
+    ProposalRedirect, Comment, ProposalFeedback, FEEDBACK_AUTH_TYPE, PROPOSALSTATUS, CommentSpaceSubscription,
+    User, COMMENTSPACE_SUBSCRIPTION_TYPE)
 from ..forms import ProposalForm, CommentForm, DeleteCommentForm, ProposalStatusForm
 
 proposal_headers = [
@@ -117,7 +118,9 @@ def proposal_new(profile, space):
             proposal.votes.vote(g.user)  # Vote up your own proposal by default
         form.populate_obj(proposal.formdata)
         proposal.name = make_name(proposal.title)
+        comment_susbscription = CommentSpaceSubscription(user=g.user, commentspace=proposal.comments)
         db.session.add(proposal)
+        db.session.add(comment_susbscription)
         db.session.commit()
         flash(_("Your new session has been saved"), 'info')
         return redirect(proposal.url_for(), code=303)
@@ -204,6 +207,59 @@ def proposal_delete(profile, space, proposal):
         cancel_url=proposal.url_for())
 
 
+def send_comment_notification(comment, parent, proposal, space, to_redirect):
+    send_mail_info = []
+    notified_emails = []
+
+    if comment.parent:
+        if parent.user.email:
+            if parent.user == proposal.user:  # check if parent comment & proposal owner are same
+                if not g.user == parent.user:  # check if parent comment is by proposal owner
+                    send_mail_info.append({'to': proposal.user.email or proposal.email,
+                        'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
+                        'template': 'proposal_comment_reply_email.md'})
+                    notified_emails.append(proposal.user.email or proposal.email)
+            else:  # send mail to parent comment owner & proposal owner
+                if not parent.user == g.user:
+                    send_mail_info.append({'to': parent.user.email,
+                        'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
+                        'template': 'proposal_comment_to_proposer_email.md'})
+                    notified_emails.append(parent.user.email)
+                if not proposal.user == g.user:
+                    send_mail_info.append({'to': proposal.user.email or proposal.email,
+                        'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
+                        'template': 'proposal_comment_email.md'})
+                    notified_emails.append(proposal.user.email or proposal.email)
+    else:
+        if g.user != proposal.user:
+            if not proposal.user == g.user:
+                send_mail_info.append({'to': proposal.user.email or proposal.email,
+                    'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
+                    'template': 'proposal_comment_email.md'})
+                notified_emails.append(proposal.user.email or proposal.email)
+
+    mentioned_users = User.get_by_mentions(comment.message)
+    for mentioned_user in mentioned_users:
+        if mentioned_user.email and mentioned_user.email not in notified_emails:
+            send_mail_info.append({'to': mentioned_user.email,
+                'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
+                'template': 'proposal_mention_email.md'})
+            notified_emails.append(mentioned_user.email)
+
+    for subscriber in proposal.comments.all_subscribers():
+        # ensure subscriber has not been notified already
+        if subscriber.email not in notified_emails:
+            send_mail_info.append({'to': subscriber.email,
+                'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
+                'template': 'proposal_comment_email.md'})
+
+    for item in send_mail_info:
+        email_body = render_template(item.pop('template'), proposal=proposal, comment=comment, link=to_redirect)
+        if item.get('to'):
+            # Sender is set to None to prevent revealing email.
+            send_mail(sender=None, body=email_body, **item)
+
+
 @app.route('/<space>/<proposal>', methods=['GET', 'POST'], subdomain='<profile>')
 @load_models(
     (Profile, {'name': 'profile'}, 'g.profile'),
@@ -220,7 +276,6 @@ def proposal_view(profile, space, proposal):
     delcommentform = DeleteCommentForm()
     if request.method == 'POST':
         if request.form.get('form.id') == 'newcomment' and commentform.validate() and 'new-comment' in g.permissions:
-            send_mail_info = []
             if commentform.comment_edit_id.data:
                 comment = Comment.query.get(int(commentform.comment_edit_id.data))
                 if comment:
@@ -237,40 +292,17 @@ def proposal_view(profile, space, proposal):
                     message=commentform.message.data)
                 if commentform.parent_id.data:
                     parent = Comment.query.get(int(commentform.parent_id.data))
-                    if parent.user.email:
-                        if parent.user == proposal.user:  # check if parent comment & proposal owner are same
-                            if not g.user == parent.user:  # check if parent comment is by proposal owner
-                                send_mail_info.append({'to': proposal.user.email or proposal.email,
-                                    'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
-                                    'template': 'proposal_comment_reply_email.md'})
-                        else:  # send mail to parent comment owner & proposal owner
-                            if not parent.user == g.user:
-                                send_mail_info.append({'to': parent.user.email,
-                                    'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
-                                    'template': 'proposal_comment_to_proposer_email.md'})
-                            if not proposal.user == g.user:
-                                send_mail_info.append({'to': proposal.user.email or proposal.email,
-                                    'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
-                                    'template': 'proposal_comment_email.md'})
-
                     if parent and parent.commentspace == proposal.comments:
                         comment.parent = parent
-                else:  # for top level comment
-                    if not proposal.user == g.user:
-                        send_mail_info.append({'to': proposal.user.email or proposal.email,
-                            'subject': u"{space} Funnel: {proposal}".format(space=space.title, proposal=proposal.title),
-                            'template': 'proposal_comment_email.md'})
+                else:
+                    parent = None
                 proposal.comments.count += 1
                 comment.votes.vote(g.user)  # Vote for your own comment
                 db.session.add(comment)
                 flash(_("Your comment has been posted"), 'info')
             db.session.commit()
             to_redirect = comment.url_for(proposal=proposal, _external=True)
-            for item in send_mail_info:
-                email_body = render_template(item.pop('template'), proposal=proposal, comment=comment, link=to_redirect)
-                if item.get('to'):
-                    # Sender is set to None to prevent revealing email.
-                    send_mail(sender=None, body=email_body, **item)
+            send_comment_notification(comment, parent, proposal, space, to_redirect)
             # Redirect despite this being the same page because HTTP 303 is required to not break
             # the browser Back button
             return redirect(to_redirect, code=303)
