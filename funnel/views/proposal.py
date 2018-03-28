@@ -16,7 +16,8 @@ from baseframe.forms import render_form, render_delete_sqla, Form
 from .. import app, mail, lastuser
 from ..models import (db, Profile, ProposalSpace, ProposalSpaceRedirect, ProposalSpaceSection, Proposal,
     ProposalRedirect, Comment, ProposalFeedback, FEEDBACK_AUTH_TYPE)
-from ..forms import ProposalForm, CommentForm, DeleteCommentForm, ProposalTransitionForm, ProposalMoveForm
+from ..forms import (ProposalForm, CommentForm, DeleteCommentForm, ProposalTransitionForm,
+    ProposalTransferForm, ProposalMoveForm)
 
 proposal_headers = [
     'id',
@@ -289,12 +290,14 @@ def proposal_view(profile, space, proposal):
     transitionform = ProposalTransitionForm(obj=proposal)
 
     proposal_move_form = None
+    proposal_transfer_form = None
     if 'move_to' in proposal.current_access():
         proposal_move_form = ProposalMoveForm()
+        proposal_transfer_form = ProposalTransferForm()
 
     return render_template('proposal.html.jinja2', space=space, proposal=proposal,
         comments=comments, commentform=commentform, delcommentform=delcommentform,
-        votes_groups=proposal.votes_by_group(),
+        votes_groups=proposal.votes_by_group(), proposal_transfer_form=proposal_transfer_form,
         links=links, transitionform=transitionform, proposal_move_form=proposal_move_form,
         part_a=space.proposal_part_a.get('title', 'Objective'),
         part_b=space.proposal_part_b.get('title', 'Description'), csrf_form=Form())

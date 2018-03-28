@@ -4,13 +4,15 @@ from baseframe import __
 import baseframe.forms as forms
 from flask import g
 from baseframe.forms.sqlalchemy import QuerySelectField
-from ..models import ProposalSpace, Profile, Proposal
+from ..models import ProposalSpace, Profile, Proposal, User
+from .. import lastuser
 
-__all__ = ['TransferProposal', 'ProposalForm', 'ProposalTransitionForm', 'ProposalMoveForm']
+__all__ = ['ProposalTransferForm', 'ProposalForm', 'ProposalTransitionForm', 'ProposalMoveForm']
 
 
-class TransferProposal(forms.Form):
-    userid = forms.UserSelectField(__("Transfer to"), validators=[forms.validators.DataRequired()])
+class ProposalTransferForm(forms.Form):
+    userid = forms.UserSelectField(__("Transfer to"), validators=[forms.validators.DataRequired()],
+        usermodel=User, lastuser=lastuser)
 
 
 class ProposalForm(forms.Form):
