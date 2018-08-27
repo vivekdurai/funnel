@@ -18,3 +18,11 @@ funnel/static/gen
 *.sql
 *.gz
 *.bz2
+*.min.js
+funnel/static/thumbnails/*
+funnel/static/gen/*
+funnel/assets/node_modules/*
+funnel/static/build
+funnel/templates/index.html.jinja2
+templates/index.html.jinja2
+funnel/static/service-worker.js

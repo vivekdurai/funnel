@@ -194,6 +194,10 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
     def proposal_part_b(self):
         return self.labels.get('proposal', {}).get('part_b', {})
 
+    @property
+    def view_url(self):
+        return self.url_for(action='view', _external=True)
+
     def set_labels(self, value=None):
         """
         Sets 'labels' with the provided JSON, else with a default configuration
@@ -374,6 +378,12 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
         # union_all() because union() doesn't respect the orders mentioned in subqueries
         return upcoming.union_all(past)
 
+    __roles__ = {
+        'all': {
+            'read': {'title', 'tagline', 'description', 'instructions', 'datelocation', 'bg_image', 'view_url', 'buy_tickets_url'}
+        }
+    }
+
     def roles_for(self, actor=None, anchors=()):
         roles = super(ProposalSpace, self).roles_for(actor, anchors)
         if actor is not None:
@@ -384,7 +394,6 @@ class ProposalSpace(BaseScopedNameMixin, db.Model):
             roles.add('reader')  # https://github.com/hasgeek/funnel/pull/220#discussion_r168718052
         roles.update(self.profile.roles_for(actor, anchors))
         return roles
-
 
 
 class ProposalSpaceRedirect(TimestampMixin, db.Model):

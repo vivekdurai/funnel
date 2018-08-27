@@ -2,18 +2,26 @@
 
 from flask import g, render_template, redirect, jsonify
 from datetime import datetime
-from coaster.views import jsonp, load_model
+from coaster.views import jsonp, load_model, render_with
 from .. import app
 from ..models import Profile, ProposalSpace, Proposal
 from .space import space_data
 
 
+def jsonify_spaces(data):
+    spaces_dict = []
+    for space in data['spaces']:
+        spaces_dict.append(dict(space.current_access()))
+    return jsonify(spaces=spaces_dict)
+
+
 @app.route('/')
+@render_with({'text/html': 'index.html.jinja2', 'application/json': jsonify_spaces})
 def index():
     g.profile = None
     g.permissions = []
     spaces = ProposalSpace.fetch_sorted().filter(ProposalSpace.profile != None).all()
-    return render_template('index.html.jinja2', spaces=spaces)
+    return dict(spaces=spaces)
 
 
 @app.route('/api/whoami')
@@ -41,11 +49,12 @@ def spaces_json(profile):
 
 @app.route('/', subdomain='<profile>')
 @load_model(Profile, {'name': 'profile'}, 'g.profile', permission='view')
+@render_with({'text/html': 'index.html.jinja2', 'application/json': jsonify_spaces})
 def profile_view(profile):
     spaces = ProposalSpace.fetch_sorted().filter(
         ProposalSpace.profile == profile, ProposalSpace.parent_space == None
     ).all()
-    return render_template('index.html.jinja2', spaces=spaces)
+    return dict(spaces=spaces)
 
 
 # Legacy routes for funnel to talkfunnel migration
