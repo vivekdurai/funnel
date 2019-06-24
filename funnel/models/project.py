@@ -343,6 +343,7 @@ class Project(UuidMixin, BaseScopedNameMixin, db.Model):
 
     @cached_property
     def calendar_weeks(self):
+        current_locale = get_locale()
         session_dates = db.session.query('date', 'count').from_statement(db.text(
             '''
             SELECT DATE_TRUNC('day', "start" AT TIME ZONE :timezone) AS date, COUNT(*) AS count
@@ -361,7 +362,8 @@ class Project(UuidMixin, BaseScopedNameMixin, db.Model):
                 if result.date.date() == wdate:
                     weeks[weekobj.week]['dates'][wdate.day] += result.count
                     if 'month' not in weeks[weekobj.week]:
-                        weeks[weekobj.week]['month'] = format_date(wdate, 'MMM', locale=get_locale())
+                        weeks[weekobj.week]['month'] = format_date(wdate, 'MMM', locale=current_locale)  # Jan, Feb, etc
+                        weeks[weekobj.week]['month_fullname'] = format_date(wdate, 'MMMM', locale=current_locale)  # January, February, etc
 
         # Extract sorted weeks as a list
         weeks_list = [v for k, v in sorted(weeks.items())]
@@ -372,8 +374,10 @@ class Project(UuidMixin, BaseScopedNameMixin, db.Model):
             week['dates'] = week['dates'].items()
 
         return {
-            'locale': get_locale(), 'weeks': weeks_list,
-            'days': [format_date(day, 'EEEEE', locale=get_locale()) for day in Week.thisweek().days()]}
+            'locale': current_locale, 'weeks': weeks_list,
+            'days': [format_date(day, 'EEEEE', locale=current_locale) for day in Week.thisweek().days()],  # M, T, W, etc
+            'days_fullname': [format_date(day, 'EEEE', locale=current_locale) for day in Week.thisweek().days()],  # Monday, Tuesday, etc
+            }
 
     @property
     def rooms(self):
