@@ -80,7 +80,7 @@
     </div>
   </div>
   <div class="sub-navbar-container sub-navbar-container--sticky mui--bg-accent">
-    <nav class="sub-navbar mui-container" id="page-navbar">
+    <nav class="sub-navbar mui-container" id="page-navbar" role="navigation" aria-label="Project page navigation">
       <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'project' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'project' -%}{{ project.url_for() }}{%- endif %}#about" title="About" data-action="About(navbar)">About</a>
       {%- if project.featured_sessions %}
         <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'project' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'project' -%}{{ project.url_for() }}{%- endif %}#talks" title="Talks" data-action="Talks(navbar)">Talks</a>

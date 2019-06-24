@@ -34,7 +34,7 @@
         <div class="grid">
           <div class="grid__col-xs-12">
             {%- if g.profile %}
-              <h1 class="mui--text-headline">{{ g.profile.description }}</h1>
+              <h2 class="mui--text-headline">{{ g.profile.description }}</h2>
             {% endif %}
           </div>
         </div>
@@ -47,22 +47,22 @@
   <div class="page-content {%- if not g.profile %} page-content--top-padding{% endif %}">
     {%- if config['LEGACY'] and not g.profile %}
       <div class="alert alert--warning funnel-notice">
-        <p class="alert__text"><i class="material-icons alert__icon mui--text-body1">warning</i> {% trans %}Talkfunnel will be discontinued in 2020 and is no longer accepting new projects. Please use <a href="https://hasgeek.com" class="banner__headline-txt">HasGeek</a>.{% endtrans %}</p>
+        <p class="alert__text"><i class="material-icons alert__icon mui--text-body1" aria-hidden="true">warning</i> {% trans %}Talkfunnel will be discontinued in 2020 and is no longer accepting new projects. Please use <a href="https://hasgeek.com" class="banner__headline-txt">HasGeek</a>.{% endtrans %}</p>
       </div>
     {%- endif -%}
     {%- if not g.profile %}
       <div class="grid">
         <div class="grid__col-sm-12">
-          <h1 class="mui--text-headline">{{ config['WELCOME_MESSAGE'] }}</h1>
+          <h2 class="mui--text-headline">{{ config['WELCOME_MESSAGE'] }}</h2>
         </div>
       </div>
     {% endif %}
     {% if projects %}
-      <ul class="grid projects">
+      <ul class="grid projects" role="list">
         {% for project in projects %}
-          <li class="grid__col-12 grid__col-xs-12 grid__col-sm-6 grid__col-lg-4">
+          <li class="grid__col-12 grid__col-xs-12 grid__col-sm-6 grid__col-lg-4" role="listitem">
             <div class="grid__cell">
-              <div class="card clickable-card" title="{{ project.title }}" data-href="{{ project.url_for() }}">
+              <div class="card clickable-card" title="{{ project.title }}" data-href="{{ project.url_for() }}" aria-label="{{ project.title }}">
                 <div class="card__image-wrapper">
                   {% if project.bg_image.url %}
                     <img class="card__image js-lazyload-img" data-src="{{ project.bg_image }}" alt="{{ project.title }}"/>
@@ -75,7 +75,7 @@
                 </div>
                 <div class="card__title">
                   <h3 class="mui--text-title card__title__heading">{{ project.title }}</h3>
-                  <h4 class="mui--text-caption card__title__heading">{{ project.datelocation }}</h4>
+                  <p class="mui--text-caption card__title__heading">{{ project.datelocation }}</p>
                 </div>
                 {% if project.tagline %}
                   <div class="card__body">

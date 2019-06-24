@@ -161,28 +161,31 @@
                 <p class="mui--text-subhead mui--text-light zero-top-margin">{{ project.tagline }}</p>
                 {% if project.calendar_weeks.weeks and project.calendar_weeks.weeks|length > 0 %}
                   <div class="card__calendar">
-                    <div class="calendar">
-                      <div class="calendar__weekdays">
-                        <p class="calendar__weekdays__name calendar__weekdays__name--weekday mui--text-title mui--text-light"></p>
+                    <div class="calendar" role="grid">
+                      {{ project.calendar_weeks|tojson }}
+                      <div class="calendar__weekdays" role="row">
+                        <p class="calendar__weekdays__name calendar__weekdays__name--weekday mui--text-title mui--text-light" aria-hidden="true"></p>
                         {% for weekday in project.calendar_weeks.days %}
-                          <p class="calendar__weekdays__name calendar__weekdays__name--weekday mui--text-title mui--text-light">{{ weekday }}</p>
+                          <p class="calendar__weekdays__name calendar__weekdays__name--weekday mui--text-title mui--text-light" role="columnheader" aria-label="{{ weekday }}">{{ weekday }}</p>
                         {% endfor %}
                       </div>
-                      <div class="calendar__weekdays">
-                        {% for week in project.calendar_weeks.weeks %}
-                          <div class="calendar__weekdays__month">
-                            {% if loop.index == 1 or project.calendar_weeks.weeks[loop.index - 2] and week.month != project.calendar_weeks.weeks[loop.index - 2].month %}
-                              <p class="calendar__weekdays__name calendar__weekdays__name--month mui--text-title mui--text-bold">{{ week.month }}</p>
-                            {% else %}
-                              <p class="calendar__weekdays__name calendar__weekdays__name--month mui--text-title mui--text-bold"> </p>
-                            {% endif %}
-                          </div>
-                          <div class="calendar__weekdays__dates">
-                            {% for date in week.dates %}
-                              <p class="calendar__weekdays__date {% if date[1] > 0 %}calendar__weekdays__date--active mui--text-dark {% else %} mui--text-accent{% endif %}"><span class="calendar__weekdays__date__text">{{ date[0] }}</span></p>
-                            {% endfor %}
-                          </div>
-                        {% endfor %}
+                      <div role="rowgroup">
+                        <div class="calendar__weekdays" role="row">
+                          {% for week in project.calendar_weeks.weeks %}
+                            <div class="calendar__weekdays__month">
+                              {% if loop.index == 1 or project.calendar_weeks.weeks[loop.index - 2] and week.month != project.calendar_weeks.weeks[loop.index - 2].month %}
+                                <p class="calendar__weekdays__name calendar__weekdays__name--month mui--text-title mui--text-bold" role="rowheader" aria-label="{{ weekday }}">{{ week.month }}</p>
+                              {% else %}
+                                <p class="calendar__weekdays__name calendar__weekdays__name--month mui--text-title mui--text-bold" role="rowheader" aria-label="{{ weekday }}"></p>
+                              {% endif %}
+                            </div>
+                            <div class="calendar__weekdays__dates">
+                              {% for date in week.dates %}
+                                <p class="calendar__weekdays__date {% if date[1] > 0 %}calendar__weekdays__date--active mui--text-dark {% else %} mui--text-accent{% endif %}" role="gridcell" tabindex="-1" aria-label="{{ date[0] }}" aria-readonly="true"><span class="calendar__weekdays__date__text">{{ date[0] }}</span></p>
+                              {% endfor %}
+                            </div>
+                          {% endfor %}
+                        </div>
                       </div>
                     </div>
                   </div>
