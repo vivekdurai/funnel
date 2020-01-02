@@ -21,7 +21,6 @@ const badgeScan = {
         facingMode: true,
         cameras: [],
         selectedCamera: '',
-        svgIconUrl: window.HasGeek.config.svgIconUrl,
       },
 
       closeModal(event) {

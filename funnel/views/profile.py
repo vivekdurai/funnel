@@ -14,7 +14,7 @@ from coaster.views import (
 )
 
 from .. import app, funnelapp, lastuser
-from ..forms import EditProfileForm, NewProfileForm, SavedProjectForm
+from ..forms import EditProfileForm, NewProfileForm
 from ..models import Profile, Project, Team, db
 from .decorators import legacy_redirect
 from .mixins import ProfileViewMixin
@@ -145,7 +145,6 @@ class ProfileView(ProfileViewMixin, UrlForView, ModelView):
             'featured_project': (
                 featured_project.current_access() if featured_project else None
             ),
-            'project_save_form': SavedProjectForm(),
         }
 
     @route('json')

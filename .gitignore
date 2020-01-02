@@ -25,4 +25,3 @@ funnel/static/gen
 node_modules
 funnel/static/build
 funnel/static/service-worker.js
-console.py

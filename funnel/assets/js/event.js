@@ -114,7 +114,6 @@ const ParticipantTable = {
         cancelcheckinQ: new Queue(`${eventName}-cancelcheckin-queue`),
         isAdmin,
         isConcierge,
-        svgIconUrl: window.HasGeek.config.svgIconUrl,
         getCsrfToken() {
           return $('meta[name="csrf-token"]').attr('content');
         },

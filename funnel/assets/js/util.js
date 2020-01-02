@@ -219,21 +219,9 @@ export const SaveProject = function({ formId, postUrl, config = {} }) {
   const onSuccess = function() {
     $(`#${formId}`)
       .find('button')
+      .css('display', 'inline-block')
       .prop('disabled', false)
-      .removeClass('animate-btn--animate');
-
-    $(`#${formId}`)
-      .find('button')
-      .each(function() {
-        if ($(this).hasClass('animate-btn--show')) {
-          $(this).removeClass('animate-btn--show');
-        } else {
-          $(this).addClass('animate-btn--show');
-          if ($(this).hasClass('animate-btn--saved')) {
-            $(this).addClass('animate-btn--animate');
-          }
-        }
-      });
+      .toggleClass('mui--hide');
   };
 
   const onError = function(response) {
