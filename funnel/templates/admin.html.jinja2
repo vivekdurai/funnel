@@ -25,24 +25,24 @@
         <ol class="mui-list--aligned">
           {%- for event in events %}
             <li>
-              <a href="{{ event.url_for('view') }}" class="mui--text-subhead" data-cy="{{ event.title }}" data-action="View {{ event.title }}">{{ event.title }}</a>{%- if project.current_roles.concierge %}&nbsp;<a href="{{ event.url_for('edit') }}" aria-label="{% trans %}Edit{% endtrans %}"  data-action="edit {{ event.title }}">{{ faicon(icon='edit', icon_size='subhead') }}</a>{%- endif %}
+              <a href="{{ event.url_for('view') }}" class="mui--text-subhead" data-cy="{{ event.title }}" data-action="View {{ event.title }}">{{ event.title }}</a>{% if event.view_for('edit').is_available() %}&nbsp;<a href="{{ event.url_for('edit') }}" aria-label="{% trans %}Edit{% endtrans %}"  data-action="edit {{ event.title }}">{{ faicon(icon='edit', icon_size='subhead') }}</a>{%- endif %}
             </li>
           {%- endfor %}
         </ol>
       </div>
-      {%- if project.current_roles.concierge %}
       <div class="mui-divider"></div>
       <div class="card__footer">
-        <a href="{{ project.url_for('new_event') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" data-cy="new-event">{% trans %}New event{% endtrans %}</a>
+        {% if project.view_for('new_event').is_available() %}
+          <a href="{{ project.url_for('new_event') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--primary" data-cy="new-event">{% trans %}New event{% endtrans %}</a>
+        {%- endif %}
         {%- if project.events %}
           <a href="{{ project.url_for('new_participant') }}" class="mui-btn mui-btn--small mui-btn--flat mui-btn--accent" data-cy="add-participant">{% trans %}Add participant{% endtrans %}</a>
         {%- endif %}
       </div>
-      {%- endif %}
     </div>
   </div>
 
- {%- if project.current_roles.concierge %}
+{% if project.view_for('new_ticket_type').is_available() %}
   <div class="grid__col-xs-12 grid__col-sm-6 grid__col-md-4">
     <div class="card">
       <div class="card__header">
@@ -52,7 +52,7 @@
         <ol class="mui-list--aligned">
           {%- for ticket_type in project.ticket_types -%}
             <li data-cy-ticket="{{ ticket_type.title }}">
-              <a href="{{ ticket_type.url_for() }}" class="mui--text-subhead" data-action="View {{ ticket_type.title }}">{{ ticket_type.title }}</a>{%- if project.current_roles.concierge %}&nbsp;<a href="{{ ticket_type.url_for('edit') }}" aria-label="{% trans %}Edit{% endtrans %}" data-cy="ticket-edit"  data-action="edit {{ ticket_type.title }}">{{ faicon(icon='edit', icon_size='subhead') }}</a>{%- endif %}
+              <a href="{{ ticket_type.url_for() }}" class="mui--text-subhead" data-action="View {{ ticket_type.title }}">{{ ticket_type.title }}</a>&nbsp;<a href="{{ ticket_type.url_for('edit') }}" aria-label="{% trans %}Edit{% endtrans %}" data-cy="ticket-edit"  data-action="edit {{ ticket_type.title }}">{{ faicon(icon='edit', icon_size='subhead') }}</a>
             </li>
           {%- endfor %}
         </ol>
@@ -63,7 +63,9 @@
       </div>
     </div>
   </div>
+{%- endif %}
 
+{% if project.view_for('new_ticket_client').is_available() %}
   <div class="grid__col-xs-12 grid__col-sm-6 grid__col-md-4">
     <div class="card">
       <div class="card__header">
@@ -74,7 +76,7 @@
         <ol class="mui-list--aligned">
           {%- for client in project.ticket_clients %}
             <li>
-              <span class="mui--text-subhead">{{client.name}}</span>{%- if project.current_roles.concierge %}&nbsp;<a href="{{ client.url_for('edit') }}" aria-label="{% trans %}Edit{% endtrans %}"  data-action="Edit {{ client.name }}">{{ faicon(icon='edit', icon_size='subhead') }}</a>{%- endif %}
+              <span class="mui--text-subhead">{{client.name}}</span>&nbsp;<a href="{{ client.url_for('edit') }}" aria-label="{% trans %}Edit{% endtrans %}"  data-action="Edit {{ client.name }}">{{ faicon(icon='edit', icon_size='subhead') }}</a>
             </li>
           {%- endfor %}
         </ol>
@@ -94,6 +96,6 @@
       </div>
     </div>
   </div>
-  {%- endif %}
+{%- endif %}
 </div>
 {% endblock %}

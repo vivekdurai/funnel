@@ -10,6 +10,7 @@ const Membership = {
     divElem,
     memberTemplate,
     isUserProfileAdmin,
+    isMember,
   }) {
     Vue.use(VS2);
 
@@ -38,6 +39,7 @@ const Membership = {
           newMemberUrl,
           members: members.length > 0 ? members : '',
           isUserProfileAdmin,
+          isMember,
           roles: roles,
           memberForm: '',
           activeMember: '',

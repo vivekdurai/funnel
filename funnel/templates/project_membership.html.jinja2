@@ -32,7 +32,7 @@
       <div class="grid__col-xs-12">
         {% raw %}
         <div id="manage-membership">
-          <div class="membership-wrapper" v-if="isUserProfileAdmin">
+          <div class="membership-wrapper" v-if="isMember || isUserProfileAdmin">
             <div class="content-box mui--z1" @click="isMobile ? showInfo = !showInfo : null" role="button" aria-label="What role should I assign? Read more">
               <p class="mui--text-headline mui--text-bold">What role should I assign?</p>
               <p class="mui--text-subhead">Read this before adding a new member
@@ -200,6 +200,7 @@
         divElem: "#manage-membership",
         memberTemplate: '#member-template',
         isUserProfileAdmin: {%- if project.profile.current_roles.admin %} true {% else %} false {%- endif %},
+        isMember: {%- if project.current_roles.editor or project.current_roles.concierge or project.current_roles.usher %} true {% else %} false {%- endif %}
       };
       HasGeek.Membership(membershipConfig);
     });
