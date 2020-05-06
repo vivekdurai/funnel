@@ -77,7 +77,7 @@
   <div class="grid">
     <div class="grid__col-sm-12">
       <p class="mui--text-headline">{% trans %}There are no projects at this time.{% endtrans %}
-        {% if g.profile and g.profile.current_roles.admin %}<a href="{{ g.profile.url_for('new_project') }}">{% trans %}Create one{% endtrans %}</a>.{% endif %}
+        {% if g.profile and g.profile.view_for('new_project').is_available() %}<a href="{{ g.profile.url_for('new_project') }}">{% trans %}Create one{% endtrans %}</a>.{% endif %}
       </p>
     </div>
   </div>

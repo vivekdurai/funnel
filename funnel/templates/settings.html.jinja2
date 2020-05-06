@@ -36,7 +36,7 @@
               <h3 class="mui--text-title mui--text-uppercase mui--text-bold">{% trans %}Admin panel{% endtrans %}</h3>
             </div>
             <div class="card__body">
-              {%- if project.current_roles.editor %}
+              {%- if project.view_for('cfp').is_available() %}
                 {%- if transition_form %}
                   <div>
                     <p class="mui--text-body2 zero-bottom-margin mui--text-uppercase" data-cy="project-state">{% trans status=project.state.label.title %}Status: {{ status }}{% endtrans %}</p>

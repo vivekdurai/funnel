@@ -95,7 +95,7 @@
                 <a href="{{ url_for('login') }}" class='mui-btn mui-btn--raised mui-btn--primary'>{% trans %}Login to respond{% endtrans %}</a>
               </p>
             {%- endif %}
-            {% if project.current_roles.concierge %}
+            {% if project.view_for('rsvp_list').is_available() %}
               <a href="{{ project.url_for('rsvp_list') }}" data-cy="see-responses">{% trans %}See responses{% endtrans %}</a>
             {% endif %}
           {%- endif %}
@@ -127,15 +127,6 @@
             </li>
           {%- endfor -%}
         </ul>
-      {%- endif %}
-      {% if project.boxoffice_data and project.boxoffice_data.item_collection_id -%}
-        <p><a class="mui-btn mui-btn--raised mui-btn--primary" href="{{ project.url_for() }}#tickets" data-action="Buy Tickets url" target="_blank">
-          {% if project.boxoffice_data and project.boxoffice_data.buy_btn_text -%}
-            {{ project.boxoffice_data.buy_btn_text }}
-          {% else %}
-            {% trans %}Tickets{% endtrans %}
-          {% endif %}
-        </a></p>
       {%- endif %}
 
       {% if project.featured_sessions  %}
