@@ -87,6 +87,12 @@
   </div>
 {% endmacro %}
 
+{% macro livestream_edit_btn(project) %}
+  {% if project.view_for('edit_livestream').is_available() %}
+    <a href="{{ project.url_for('edit_livestream') }}" class="mui-btn mui-btn--primary mui-btn--raised project-banner__box__add-btn">{% trans %}Update livestream URLs{% endtrans %}</a>
+  {% endif %}
+{% endmacro %}
+
 {% macro project_header(project, project_save_form, class='', current_page='project') %}
   <div class="mui-container project-banner {% if class %}{{ class }}{% endif %}">
     <div class="grid">
@@ -121,6 +127,7 @@
           {%- for stream in project.livestream_urls %}
             <div role="tabpanel" class="mui-tabs__pane {%- if loop.first %} mui--is-active{% endif %}" id="pane-justified-{{ loop.index }}">
               <div class="project-banner__box">
+                {{ livestream_edit_btn(project) }}
                 <div class="embed-video-wrapper js-embed-video" data-video-src="{{ stream }}">
                   <p class="video_txt">
                     {{ faicon(icon='video', icon_size='display1') }}<br>
@@ -134,19 +141,19 @@
         </div>
       {% else %}
         <div class="grid__col-sm-12 grid__col-md-8 project-banner__box">
+          {{ livestream_edit_btn(project) }}
           <div class="embed-video-wrapper">
             {% if project.banner_video_url.url %}
-              {{ project.banner_video_url|safe }}
+              <div class="embed-video-wrapper js-embed-video" data-video-src="{{ project.banner_video_url }}">
+                <p class="video_txt">
+                  {{ faicon(icon='video', icon_size='display1') }}<br>
+                  <a href="{{ project.banner_video_url }}" target="_blank" class="mui--text-title">{% trans %}Preview video{% endtrans %}</a>
+                </p>
+              </div>
             {%- elif project.bg_image.url %}
               <img class="project-banner__box__image" src="{{ project.bg_image }}" alt="{{ project.title }}" data-cy="bg_image"/>
-              {% if project.view_for('edit_livestream').is_available() %}
-                <a href="{{ project.url_for('edit_livestream') }}" class="mui-btn mui-btn--primary mui-btn--raised project-banner__box__add-btn">{% trans %}Add livestream URLs{% endtrans %}</a>
-              {% endif %}
             {%- else %}
               <img class="project-banner__box__image" src="{{ url_for('static', filename='img/default-banner.png') }}"/>
-              {% if project.view_for('edit_livestream').is_available() %}
-                <a href="{{ project.url_for('edit_livestream') }}#bg_image" class="mui-btn mui-btn--primary mui-btn--raised project-banner__box__add-btn">{% trans %}Add banner image{% endtrans %}</a>
-              {% endif %}
             {% endif %}
           </div>
           {{ project_share(project, project_save_form) }}
@@ -212,7 +219,7 @@
         <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'project' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'project' -%}{{ project.url_for() }}{%- endif %}#talks" data-action="Talks(navbar)" data-cy-navbar="talks">{% trans %}Talks{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
       {%- endif %}
       {%- if project.sessions_with_video.count() > 0 %}
-        <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'videos' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'videos' -%}{{ project.url_for('session_videos') }}{%- endif %}#video" data-action="Video(navbar)" data-cy-navbar="video">{% trans %}Video{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
+        <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'videos' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'videos' -%}{{ project.url_for('session_videos') }}{%- endif %}#videos" data-action="Video(navbar)" data-cy-navbar="video">{% trans %}Video{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
       {%- endif %}
       {%- if project.hasjob_embed_url.url -%}
         <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'project' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'project' -%}{{ project.url_for() }}{%- endif %}#related-jobs" data-action="Jobs(navbar)" data-cy-navbar="jobs">{% trans %}Jobs{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
@@ -224,9 +231,9 @@
         <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'proposals' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'proposals' -%}{{ project.url_for('view_proposals') }}{%- endif %}#call-for-proposal" data-action="Proposals(navbar)" data-cy-navbar="proposals">{% trans %}Proposals{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
       {%- endif %}
       {%- if project.schedule_state.PUBLISHED %}
-        <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'schedule' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'schedule' -%}{{ project.url_for('schedule') }}{%- else %}#schedule{%- endif %}" data-action="Schedule(navbar)" data-cy-navbar="schedule">{% trans %}Schedule{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
+        <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'schedule' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'schedule' -%}{{ project.url_for('schedule') }}{%- endif %}#schedule" data-action="Schedule(navbar)" data-cy-navbar="schedule">{% trans %}Schedule{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
       {%- endif %}
-      <a class="sub-navbar__item mui--text-subhead mui--text-light" href="{{ project.url_for('crew') }}" title="Crew" data-action="Crew(navbar)" data-cy-navbar="crew">{% trans %}Crew{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
+      <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'crew' %}js-smooth-scroll js-samepage{%- endif %}"" href="{%- if current_page != 'crew' -%}{{ project.url_for('crew') }}{%- endif %}#crew" title="Crew" data-action="Crew(navbar)" data-cy-navbar="crew">{% trans %}Crew{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
       {%- if project.current_roles.editor or project.current_roles.concierge or project.current_roles.usher -%}
         <a class="sub-navbar__item mui--text-subhead mui--text-light {% if current_page == 'settings' %}js-smooth-scroll js-samepage{%- endif %}" href="{%- if current_page != 'settings' -%}{{ project.url_for('settings') }}{%- endif %}#admin-panel" data-action="Settings(navbar)" data-cy-navbar="settings">{% trans %}Settings{% endtrans %} <span class="sub-navbar__item__icon mui--pull-right">{{ faicon(icon='chevron-right', icon_size='subhead') }}</span></a>
       {%- endif %}
