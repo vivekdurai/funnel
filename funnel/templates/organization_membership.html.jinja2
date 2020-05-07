@@ -39,11 +39,11 @@
           </div>
           <div class="membership-wrapper">
             <div class="mui--clearfix">
-              <div class="mui--text-center btn-wrapper membership-wrapper--left" v-if="isUserProfileAdmin">
+              <div class="mui--text-center btn-wrapper membership-wrapper--left" v-if="hasAddPermission">
                 <button class="mui-btn mui-btn--raised mui-btn--primary full-width-btn" @click="fetchForm($event, newMemberUrl)" aria-label="Add new member" data-cy-btn="add-member"><svg class="fa5-icon fa5--align-baseline" aria-hidden="true" role="img"><use v-bind:xlink:href="svgIconUrl + '#plus'"></use></svg> Add new member</p></button>
                 <hr class="mui--hidden-xl">
               </div>
-              <div class="mui--text-center" v-if="members" :class="[isUserProfileAdmin? 'membership-wrapper--right': '']">
+              <div class="mui--text-center" v-if="members" :class="[hasAddPermission? 'membership-wrapper--right': '']">
                 <form class="mui-form mui--d-inlineblock search mui--z1" v-on:submit.prevent>
                   <div class="mui-textfield">
                     <input class="field-search" type="text" name="key" value="" placeholder="Search member…" v-model="search" @input="onChange"/>
@@ -69,7 +69,7 @@
                   </p>
                   <transition name="slide-fade">
                     <div v-if="role.showMembers">
-                      <div class="membership-wrapper__members__list membership-wrapper__members__list--nomargin" v-for="member in members" :class="[search && member.hide ? 'mui--hide' : '', isUserProfileAdmin ?  '' : 'membership-wrapper__members__list--viewonly']" @click="fetchForm($event, member.urls.edit, member)" title="Edit" aria-label="Edit" role="button" v-if="member[role.roleKey]">
+                      <div class="membership-wrapper__members__list membership-wrapper__members__list--nomargin" v-for="member in members" :class="[search && member.hide ? 'mui--hide' : '', hasAddPermission ?  '' : 'membership-wrapper__members__list--viewonly']" @click="fetchForm($event, member.urls.edit, member)" title="Edit" aria-label="Edit" role="button" v-if="member[role.roleKey]">
                         <member :member="member"></member>
                       </div>
                     </div>
@@ -77,7 +77,7 @@
                 </div>
               </div>
               <div v-if="view == 'name'" class="membership-wrapper__members">
-                <div class="membership-wrapper__members__list" v-for="member in members" :class="[search && member.hide ? 'mui--hide' : '', isUserProfileAdmin ? '' : 'membership-wrapper__members__list--viewonly']" @click="fetchForm($event, member.urls.edit, member)" title="Edit" aria-label="Edit" role="button">
+                <div class="membership-wrapper__members__list" v-for="member in members" :class="[search && member.hide ? 'mui--hide' : '', hasAddPermission ? '' : 'membership-wrapper__members__list--viewonly']" @click="fetchForm($event, member.urls.edit, member)" title="Edit" aria-label="Edit" role="button">
                   <member :member="member"></member>
                 </div>
               </div>
@@ -144,8 +144,8 @@
         ],
         divElem: "#manage-membership",
         memberTemplate: '#member-template',
-        isUserProfileAdmin: {%- if profile.current_roles.owner %} true {% else %} false {%- endif %},
-        isMember: {%- if profile.current_roles.owner or profile.current_roles.admin %} true {% else %} false {%- endif %}
+        hasAddPermission: {%- if profile.view_for('new_member').is_available() %} true {% else %} false {%- endif %},
+        isMember: {%- if profile.current_roles.owner or  profile.current_roles.admin %} true {% else %} false {%- endif %}
       };
 
       HasGeek.Membership(membershipConfig);

@@ -175,7 +175,7 @@
 
     <section class="proposal__section--border">
       <div class="proposal__admin-panel sticky-admin-panel">
-        {%- if 'edit_proposal' in proposal.permissions(current_auth.user) or proposal.current_roles.project_editor %}
+        {%- if 'edit_proposal' in proposal.permissions(current_auth.user) or proposal.project.view_for('cfp').is_available() %}
           <div class="card">
             <div class="card__header">
               <h3 class="mui--text-title mui--text-bold mui--text-uppercase" data-cy="admin-panel">Admin panel</h3>
@@ -188,7 +188,7 @@
                 </ul>
                 <hr class="mui-divider">
               {% endif %}
-              {%- if proposal.current_roles.project_editor %}
+              {%- if proposal.project.view_for('cfp').is_available() %}
                 {%- if proposal_move_form %}
                   {{ renderform(proposal_move_form, 'proposal-move', action=proposal.url_for('moveto'), submit="Move", style='horiz') }}
                   <hr class="mui-divider">
@@ -225,7 +225,7 @@
                 </form>
                 <hr class="mui-divider">
               {% endif %}
-              {% if proposal.current_roles.project_editor and proposal.state.SCHEDULED %}
+              {% if pproposal.project.view_for('cfp').is_available() and proposal.state.SCHEDULED %}
                 <a class="mui-btn mui-btn--raised mui-btn--accent" href="{{ proposal.session.url_for('edit') }}" data-cy="edit-session-video" aria-label="{% trans %}Add session video{% endtrans %}">
                   {%- if proposal.session.video %}
                     {% trans %}Edit session video{% endtrans %}

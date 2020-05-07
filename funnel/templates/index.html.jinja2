@@ -59,10 +59,10 @@
           </a>
           <div class="mui--text-headline">{{ profile.description.html }}</div>
           {%- if g.profile.view_for('edit').is_available() %}
-          <p>
-            <a class="mui-btn mui-btn--primary mui-btn--raised" data-cy-btn="profile-crew" href="{{ profile.urls['members'] }}">{%- if profile.current_roles.owner %}{% trans %}Manage members{% endtrans %}{% else %}{% trans %}View members{% endtrans %}{% endif %}</a>
-            <a class="mui-btn mui-btn--secondary mui-btn--raised" data-cy-btn="edit-details" href="{{ g.profile.url_for('edit') }}">{% trans %}Edit details{% endtrans %}</a>
-          </p>
+            <p>
+              <a class="mui-btn mui-btn--primary mui-btn--raised" data-cy-btn="profile-crew" href="{{ profile.urls['members'] }}">{%- if profile.current_roles.owner %}{% trans %}Manage members{% endtrans %}{% else %}{% trans %}View members{% endtrans %}{% endif %}</a>
+              <a class="mui-btn mui-btn--secondary mui-btn--raised" data-cy-btn="edit-details" href="{{ g.profile.url_for('edit') }}">{% trans %}Edit details{% endtrans %}</a>
+            </p>
           {% endif %}
           <div class="mui-divider mui-divider--banner"></div>
         </div>
@@ -251,7 +251,7 @@
     </div>
   {% endif %}
 
-  {%- if profile and (profile.current_roles.admin or profile.current_roles.editor or profile.current_roles.concierge) %}
+  {%- if profile and profile.current_roles.owner %}
     <div class="projects-wrapper">
       <div class="mui-container">
         <div class="grid">
