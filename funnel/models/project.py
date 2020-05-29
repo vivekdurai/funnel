@@ -782,10 +782,11 @@ class Project(UuidMixin, BaseScopedNameMixin, db.Model):
             return
 
         current_sessions = (
-            self.sessions.filter(Session.scheduled)
+            self.sessions.join(VenueRoom)
+            .filter(Session.scheduled)
             .filter(Session.start_at <= now + timedelta(minutes=30))
             .filter(Session.end_at > now)
-            .order_by(Session.start_at.asc())
+            .order_by(Session.start_at.asc(), VenueRoom.seq.asc())
         )
 
         return {
@@ -1068,4 +1069,5 @@ class ProjectLocation(TimestampMixin, db.Model):
 
 # Tail imports
 from .session import Session  # isort:skip
+from .venue import VenueRoom  # isort:skip
 from .project_membership import ProjectCrewMembership  # isort:skip
