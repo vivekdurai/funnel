@@ -123,10 +123,10 @@ const Ticketing = {
       this.hideTicketModal();
     });
 
-    $(window).on('popstate', () => {
-      if (window.history.state.openModal) {
+    $(window).on('popstate', (e) => {
+      if (e.state.openModal) {
         this.hideTicketModal();
-      } else if (window.history.state) {
+      } else if (e.history.state) {
         this.openTicketModal();
       }
     });
